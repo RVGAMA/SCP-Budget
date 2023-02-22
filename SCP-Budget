@@ -1,0 +1,117 @@
+Criar uma Política de Controle de Serviço da AWS (SCP) que isole uma conta vinculada envolve restringir o acesso a serviços e recursos específicos da AWS dentro da conta vinculada.
+
+Aqui está um exemplo de SCP que restringirá o acesso a serviços específicos em uma conta vinculada:
+
+json
+Copy code
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "DenyAllServices",
+            "Effect": "Deny",
+            "Action": "*",
+            "Resource": "*"
+        },
+        {
+            "Sid": "AllowLogDeliveryService",
+            "Effect": "Allow",
+            "Action": [
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:PutLogEvents"
+            ],
+            "Resource": [
+                "arn:aws:logs:*:*:*"
+            ]
+        }
+    ]
+}
+Este SCP nega o acesso a todos os serviços e recursos da AWS dentro da conta vinculada, exceto pelo serviço AWS CloudWatch Logs. O SCP é aplicado à raiz da organização ou à Unidade Organizacional (OU) que contém a conta vinculada.
+
+Você pode aplicar este SCP seguindo os seguintes passos:
+
+Abra o console do AWS Organizations.
+Navegue até a Unidade Organizacional (OU) ou à raiz da organização.
+Escolha a guia "Políticas".
+Clique em "Criar política".
+Insira um nome para a política e cole o código SCP.
+Escolha a conta vinculada à qual deseja aplicar a política.
+Escolha a opção "Anexar política".
+Depois de anexar essa política à conta vinculada, o acesso a todos os serviços e recursos da AWS dentro da conta será restrito, exceto pelo serviço AWS CloudWatch Logs. Isso efetivamente isolará a conta e impedirá qualquer acesso não autorizado.
+
+
+
+
+Rodrigo Gama
+adicione a essa regra a opcao de definir uma linked account expecifica
+Para adicionar a opção de definir uma conta vinculada específica nesta regra, você pode modificar o código do SCP adicionando uma condição "aws:PrincipalOrgID" que permite que a política seja aplicada apenas a contas vinculadas a uma Organização específica. Por exemplo:
+
+json
+Copy code
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "DenyAllServices",
+            "Effect": "Deny",
+            "Action": "*",
+            "Resource": "*",
+            "Condition": {
+                "StringEquals": {
+                    "aws:PrincipalOrgID": "o-1234567890" // substitua pelo ID da organização
+                }
+            }
+        },
+        {
+            "Sid": "AllowLogDeliveryService",
+            "Effect": "Allow",
+            "Action": [
+                "logs:CreateLogGroup",
+                "logs:CreateLogStream",
+                "logs:PutLogEvents"
+            ],
+            "Resource": [
+                "arn:aws:logs:*:*:*"
+            ],
+            "Condition": {
+                "StringEquals": {
+                    "aws:PrincipalOrgID": "o-1234567890" // substitua pelo ID da organização
+                }
+            }
+        }
+    ]
+}
+Observe que a condição "aws:PrincipalOrgID" é adicionada em cada declaração da política. Substitua o valor "o-1234567890" pelo ID da organização que você deseja permitir que use essa política SCP e defina a conta vinculada desejada dentro dessa organização. Isso permitirá que a política SCP seja aplicada somente a essa conta vinculada específica e em todas as outras contas que pertençam à mesma organização.
+
+
+
+
+Rodrigo Gama
+Como substituir o valor "o-1234567890" do campo  "aws:PrincipalOrgID", pelo AWS Budget Alert?
+Para substituir o valor "o-1234567890" do campo "aws:PrincipalOrgID" pelo AWS Budget Alert, você pode seguir estes passos:
+
+Abra o console do AWS Budgets.
+Navegue até a página de configurações do AWS Budget Alert que você deseja usar para definir a conta vinculada específica.
+Role para baixo até a seção "Permissões" e clique em "Adicionar permissão".
+No menu suspenso "Permissão", selecione "Service Control Policy".
+Na seção "Política", cole o código SCP modificado que inclui a condição "aws:PrincipalOrgID" que você deseja usar para restringir o acesso à conta vinculada específica.
+Na seção "Conta de destino", selecione a conta vinculada específica que você deseja isolar.
+Clique em "Salvar".
+Depois de salvar as permissões, a política SCP será aplicada à conta vinculada específica e restringirá o acesso aos serviços e recursos da AWS definidos na política, exceto pelo serviço CloudWatch Logs que foi permitido no exemplo de política SCP fornecido. Tenha em mente que a conta vinculada precisa estar em uma organização do AWS Organizations e que a organização precisa ter a opção de definição de SCP habilitada para que essa configuração funcione.
+
+
+
+
+Rodrigo Gama
+Como habilitar a linked account novamente?
+Para habilitar uma conta vinculada que foi colocada em quarentena pela aplicação de uma Service Control Policy (SCP), siga estas etapas:
+
+Faça login na conta mestre da AWS que controla a conta vinculada.
+Navegue até o console do AWS Organizations.
+No painel de navegação esquerdo, selecione "Contas".
+Na lista de contas, localize a conta vinculada que foi colocada em quarentena.
+Clique no botão "Desativar restrições" ao lado da conta.
+Selecione a opção "Desativar SCPs e permissões de IAM".
+Clique em "Desativar".
+Depois de desativar as restrições, a conta vinculada poderá acessar novamente os serviços e recursos da AWS que foram restritos pela Service Control Policy. Se você deseja habilitar apenas determinados serviços e recursos, você pode modificar a SCP para permitir acesso a eles e, em seguida, aplicar novamente a SCP à conta vinculada. Lembre-se de que o acesso da conta vinculada pode ser restringido novamente se uma nova SCP for aplicada à conta mestre ou à organização do AWS Organizations à qual ela pertence.
