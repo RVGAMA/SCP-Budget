@@ -1,0 +1,31 @@
+import boto3
+
+def lambda_handler(event, context):
+
+    # Definir o ID da organização e o ID da conta vinculada a ser colocada em quarentena
+    ORGANIZATION_ID = 'Sua AWS Organization ID'
+    LINKED_ACCOUNT_ID = 'ID da conta vinculada a ser colocada em quarentena'
+
+    # Criar uma conexão com a AWS Organizations usando as credenciais da conta mestra
+    org_client = boto3.client('organizations')
+
+    # Colocar a conta vinculada em quarentena
+    response = org_client.create_account(
+        ParentId=ORGANIZATION_ID,
+        Email='email@contavinculada.com',
+        AccountName='Nome da conta vinculada',
+        IamUserAccessToBilling='DENY',
+        Tags=[
+            {
+                'Key': 'Quarentena',
+                'Value': 'Sim'
+            },
+        ]
+    )
+
+    # Confirmar que a conta foi colocada em quarentena
+    linked_account_id = response['CreateAccountStatus']['AccountId']
+    if linked_account_id == LINKED_ACCOUNT_ID:
+        print(f"A conta {linked_account_id} foi colocada em quarentena com sucesso!")
+    else:
+        print(f"Erro ao colocar a conta em quarentena: {response}")
