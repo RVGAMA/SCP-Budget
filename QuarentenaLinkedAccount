@@ -1,0 +1,31 @@
+import boto3
+import json
+
+def lambda_handler(event, context):
+
+    # Analisar a mensagem do evento SNS
+    message = json.loads(event['Records'][0]['Sns']['Message'])
+    account_id = message['account_id']
+    organization_id = message['organization_id']
+
+    # Criar uma conexão com a AWS Organizations usando as credenciais da conta mestra
+    org_client = boto3.client('organizations')
+
+    # Colocar a conta vinculada em quarentena
+    response = org_client.update_account(
+        AccountId=account_id,
+        Name='Nome da conta vinculada',
+        IamUserAccessToBilling='DENY',
+        Tags=[
+            {
+                'Key': 'Quarentena',
+                'Value': 'Sim'
+            },
+        ]
+    )
+
+    # Confirmar que a conta foi colocada em quarentena
+    if response['Account']['Status'] == 'SUSPENDED':
+        print(f"A conta {account_id} foi colocada em quarentena com sucesso!")
+    else:
+        print(f"Erro ao colocar a conta em quarentena: {response}")
